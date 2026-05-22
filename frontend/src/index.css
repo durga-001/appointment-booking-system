@@ -16,3 +16,20 @@
 ::-webkit-scrollbar {
   @apply hidden;
 }
+
+:root {
+  --bg-primary: #0a0f1a;
+  --bg-secondary: #0f1829;
+  --bg-card: #141f35;
+  --accent-teal: #0fd4a0;
+  --accent-teal-dim: rgba(15, 212, 160, 0.12);
+  --text-primary: #e8f0ff;
+  --text-secondary: #8899bb;
+  --border: rgba(74, 158, 255, 0.12);
+  --border-hover: rgba(15, 212, 160, 0.3);
+  --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}

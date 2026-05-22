@@ -5,24 +5,63 @@ import { Link } from "react-router-dom";
 const SpecialityMenu = () => {
   return (
     <div
-      className="flex flex-col items-center gap-4 py-16 text-gray-800"
       id="speciality"
+      className="flex flex-col items-center gap-4 py-16 px-4"
+      style={{ background: "#0f1829" }}
     >
-      <h1 className="text-3xl font-medium">Find by Speciality</h1>
-      <p className="sm:w-1/3 text-center text-sm">
+      {/* Section heading */}
+      <h1
+        className="text-3xl font-semibold"
+        style={{ fontFamily: "'Playfair Display', serif", color: "#e8f0ff" }}
+      >
+        Find by Speciality
+      </h1>
+      <p className="sm:w-1/3 text-center text-sm" style={{ color: "#8899bb" }}>
         Schedule your appointment hassle free
       </p>
 
-      <div className="flex sm:justify-center gap-4 pt-5 w-full overflow-scroll">
+      {/* Speciality cards */}
+      <div className="flex sm:justify-center gap-4 pt-5 w-full overflow-x-auto pb-2">
         {specialityData.map((item, index) => (
           <Link
             onClick={() => scrollTo(0, 0)}
-            className="flex flex-col items-center text-xs cursor-pointer shrink-0 hover:-translate-y-5 transition-all duration-500"
             key={index}
             to={`doctors/${item.speciality}`}
+            className="flex flex-col items-center gap-2 text-xs cursor-pointer shrink-0 px-4 py-5 rounded-2xl transition-all duration-500"
+            style={{
+              background: "#141f35",
+              border: "0.5px solid rgba(74,158,255,0.12)",
+              color: "#8899bb",
+              minWidth: "96px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-8px)";
+              e.currentTarget.style.borderColor = "#0fd4a0";
+              e.currentTarget.style.background = "#1a2844";
+              e.currentTarget.style.boxShadow =
+                "0 12px 32px rgba(15,212,160,0.15)";
+              e.currentTarget.style.color = "#e8f0ff";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.borderColor = "rgba(74,158,255,0.12)";
+              e.currentTarget.style.background = "#141f35";
+              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.color = "#8899bb";
+            }}
           >
-            <img className="w-16 sm:w-24 mb-2" src={item.image} alt="" />
-            <p>{item.speciality}</p>
+            {/* Icon wrapper */}
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(15,212,160,0.1)" }}
+            >
+              <img
+                className="w-8 h-8 object-contain"
+                src={item.image}
+                alt={item.speciality}
+              />
+            </div>
+            <p className="text-center leading-tight">{item.speciality}</p>
           </Link>
         ))}
       </div>
