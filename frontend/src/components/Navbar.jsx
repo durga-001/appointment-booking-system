@@ -48,7 +48,7 @@ const Navbar = () => {
                   Profile
                 </p>
                 <p
-                  onClick={() => navigate("/appointments")}
+                  onClick={() => navigate("/appointment")}
                   className="hover:text-black cursor-pointer"
                 >
                   Appointments
@@ -84,27 +84,27 @@ const Navbar = () => {
             <img className="w-36" src={assets.logo} alt="" />
             <img
               className="w-7"
-              onClick={() => setShowMeny(false)}
+              onClick={() => setShowMenu(false)}
               src={assets.cross_icon}
               alt=""
             />
           </div>
           <ul className="flex flex-col items-center gap-2 mt-5 px-5 text-lg font-medium">
             <NavLink onClick={() => setShowMenu(false)} to="/">
-              <p className="px-4 py-2 rounded full inline-block">Home</p>
+              <p className="px-4 py-2 rounded-full inline-block">Home</p>
             </NavLink>
             <NavLink onClick={() => setShowMenu(false)} to="/doctors">
-              <p className="px-4 py-2 rounded full inline-block">Doctors</p>
+              <p className="px-4 py-2 rounded-full inline-block">Doctors</p>
             </NavLink>
             <NavLink onClick={() => setShowMenu(false)} to="/about">
-              <p className="px-4 py-2 rounded full inline-block">About</p>
+              <p className="px-4 py-2 rounded-full inline-block">About</p>
             </NavLink>
             <NavLink
-              className="px-4 py-2 rounded full inline-block"
+              className="px-4 py-2 rounded-full inline-block"
               onClick={() => setShowMenu(false)}
               to="/contact"
             >
-              <p className="px-4 py-2 rounded full inline-block">Contact</p>
+              <p className="px-4 py-2 rounded-full inline-block">Contact</p>
             </NavLink>
           </ul>
         </div>
