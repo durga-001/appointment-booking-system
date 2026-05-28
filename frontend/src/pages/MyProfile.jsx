@@ -1,6 +1,17 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { assets } from "../assets/assets";
+
+const inputStyle = {
+  background: "#0f1829",
+  border: "0.5px solid rgba(74,158,255,0.2)",
+  borderRadius: "10px",
+  color: "#e8f0ff",
+  padding: "0.5rem 0.75rem",
+  fontSize: "0.875rem",
+  width: "100%",
+  outline: "none",
+  transition: "border-color 0.3s",
+};
 
 const MyProfile = () => {
   const [userData, setUserData] = useState({
@@ -8,140 +19,214 @@ const MyProfile = () => {
     image: assets.profile_pic,
     email: "ishaaaa@gmail.com",
     phone: "+1 123 456 7890",
-    address: {
-      line1: "Road cross-12, Diamon Way",
-      line2: "New Road, Norves",
-    },
+    address: { line1: "Road cross-12, Diamond Way", line2: "New Road, Norves" },
     gender: "Female",
     dob: "2001-12-21",
   });
 
-  const [isEdit, isSetEdit] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+
+  const Section = ({ label, children }) => (
+    <div>
+      <p
+        className="text-xs font-semibold uppercase tracking-widest mb-3 mt-6"
+        style={{ color: "#4a5878" }}
+      >
+        {label}
+      </p>
+      {children}
+    </div>
+  );
+
+  const Row = ({ label, children }) => (
+    <div
+      className="grid grid-cols-[130px_1fr] gap-3 items-center py-2"
+      style={{ borderBottom: "0.5px solid rgba(74,158,255,0.08)" }}
+    >
+      <p className="text-sm" style={{ color: "#8899bb" }}>
+        {label}
+      </p>
+      {children}
+    </div>
+  );
 
   return (
-    <div className="max-w-lg flex flex-col gap-2 text-sm">
-      <img className="w-36 rounded" src={userData.image} alt="" />
-      {isEdit ? (
-        <input
-          className="bg-gray-50 text-3xl font-medium max-w-60 mt-4"
-          type="text"
-          value={userData.name}
-          onChange={(e) =>
-            setUserData((prev) => ({ ...prev, name: e.target.value }))
-          }
-        />
-      ) : (
-        <p className="font-medium text-3xl text-neutral-800 mt-4">
-          {userData.name}
-        </p>
-      )}
-
-      <hr className="bg-zinc-400 h-px border-none" />
-      <div>
-        <p className="text-neutral-500 underline mt-3">Contact Information</p>
-        <div>
-          <p className="font-medium">Email id:</p>
-          <p className="text-blue-500">{userData.email}</p>
-          <p className="font-medium">Phone:</p>
-          {isEdit ? (
-            <input
-              className="bg-gray-100  max-w-52"
-              type="text"
-              value={userData.phone}
-              onChange={(e) =>
-                setUserData((prev) => ({ ...prev, phone: e.target.value }))
-              }
-            />
-          ) : (
-            <p className="text-blue-400">{userData.phone}</p>
-          )}
-
-          <p className="font-medium">Address:</p>
-          {isEdit ? (
-            <p>
+    <div
+      className="min-h-screen px-4 sm:px-8 md:px-12 py-10"
+      style={{ background: "#0a0f1a" }}
+    >
+      <div
+        className="max-w-lg rounded-2xl p-8"
+        style={{
+          background: "#141f35",
+          border: "0.5px solid rgba(74,158,255,0.12)",
+        }}
+      >
+        {/* Avatar + name */}
+        <div className="flex items-center gap-5 mb-6">
+          <img
+            className="w-20 h-20 rounded-2xl object-cover"
+            style={{ border: "2px solid rgba(15,212,160,0.3)" }}
+            src={userData.image}
+            alt="Profile"
+          />
+          <div className="flex-1">
+            {isEdit ? (
               <input
-                className="bg-gray-50"
-                onChange={(e) =>
-                  setUserData((prev) => ({
-                    ...prev,
-                    address: { ...prev.address, line1: e.target.value },
-                  }))
-                }
-                value={userData.address.line1}
+                style={{
+                  ...inputStyle,
+                  fontSize: "1.25rem",
+                  fontWeight: "600",
+                }}
                 type="text"
-              />
-              <br />
-              <input
-                className="bg-gray-50"
+                value={userData.name}
                 onChange={(e) =>
-                  setUserData((prev) => ({
-                    ...prev,
-                    address: { ...prev.address, line2: e.target.value },
-                  }))
+                  setUserData((p) => ({ ...p, name: e.target.value }))
                 }
-                value={userData.address.line2}
-                type="text"
               />
+            ) : (
+              <p
+                className="text-2xl font-semibold"
+                style={{
+                  fontFamily: "'Playfair Display',serif",
+                  color: "#e8f0ff",
+                }}
+              >
+                {userData.name}
+              </p>
+            )}
+            <p className="text-xs mt-1" style={{ color: "#0fd4a0" }}>
+              Patient Profile
             </p>
-          ) : (
-            <p className="text-gray-500">
-              {userData.address.line1}
-              <br />
-              {userData.address.line2}
-            </p>
-          )}
+          </div>
         </div>
-      </div>
-      <div>
-        <p className="text-neutral-500 underline mt-3">Basic Details</p>
-        <div className="grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700">
-          <p className="font-medium">Gender: </p>
-          {isEdit ? (
-            <select
-              className="max-w-20 bg-gray-100"
-              onChange={(e) =>
-                setUserData((prev) => ({ ...prev, gender: e.target.value }))
-              }
-              value={userData.gender}
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          ) : (
-            <p className="text-gray-400">{userData.gender}</p>
-          )}
-          <p className="font-medium">Birthday: </p>
-          {isEdit ? (
-            <input
-              className="max-w-28 bg-gray-100"
-              type="date"
-              onChange={(e) =>
-                setUserData((prev) => ({ ...prev, dob: e.target.value }))
-              }
-              value={userData.dob}
-            ></input>
-          ) : (
-            <p className="text-gray-400"> {userData.dob} </p>
-          )}
-        </div>
-      </div>
 
-      <div className="mt-10">
-        {isEdit ? (
+        {/* Divider */}
+        <div style={{ height: "0.5px", background: "rgba(74,158,255,0.12)" }} />
+
+        {/* Contact info */}
+        <Section label="Contact Information">
+          <Row label="Email">
+            <p className="text-sm" style={{ color: "#4a9eff" }}>
+              {userData.email}
+            </p>
+          </Row>
+          <Row label="Phone">
+            {isEdit ? (
+              <input
+                style={inputStyle}
+                type="text"
+                value={userData.phone}
+                onChange={(e) =>
+                  setUserData((p) => ({ ...p, phone: e.target.value }))
+                }
+              />
+            ) : (
+              <p className="text-sm" style={{ color: "#4a9eff" }}>
+                {userData.phone}
+              </p>
+            )}
+          </Row>
+          <Row label="Address">
+            {isEdit ? (
+              <div className="flex flex-col gap-2">
+                <input
+                  style={inputStyle}
+                  type="text"
+                  value={userData.address.line1}
+                  onChange={(e) =>
+                    setUserData((p) => ({
+                      ...p,
+                      address: { ...p.address, line1: e.target.value },
+                    }))
+                  }
+                />
+                <input
+                  style={inputStyle}
+                  type="text"
+                  value={userData.address.line2}
+                  onChange={(e) =>
+                    setUserData((p) => ({
+                      ...p,
+                      address: { ...p.address, line2: e.target.value },
+                    }))
+                  }
+                />
+              </div>
+            ) : (
+              <p
+                className="text-sm leading-relaxed"
+                style={{ color: "#8899bb" }}
+              >
+                {userData.address.line1}
+                <br />
+                {userData.address.line2}
+              </p>
+            )}
+          </Row>
+        </Section>
+
+        {/* Basic details */}
+        <Section label="Basic Details">
+          <Row label="Gender">
+            {isEdit ? (
+              <select
+                style={inputStyle}
+                value={userData.gender}
+                onChange={(e) =>
+                  setUserData((p) => ({ ...p, gender: e.target.value }))
+                }
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            ) : (
+              <p className="text-sm" style={{ color: "#8899bb" }}>
+                {userData.gender}
+              </p>
+            )}
+          </Row>
+          <Row label="Date of Birth">
+            {isEdit ? (
+              <input
+                style={inputStyle}
+                type="date"
+                value={userData.dob}
+                onChange={(e) =>
+                  setUserData((p) => ({ ...p, dob: e.target.value }))
+                }
+              />
+            ) : (
+              <p className="text-sm" style={{ color: "#8899bb" }}>
+                {userData.dob}
+              </p>
+            )}
+          </Row>
+        </Section>
+
+        {/* Action button */}
+        <div className="mt-8">
           <button
-            className="border border-primary px-8 py-2 rounded-full hover:bg-primary hover:text-white transition-all"
-            onClick={() => isSetEdit(false)}
+            onClick={() => setIsEdit((p) => !p)}
+            className="px-8 py-2.5 rounded-full text-sm font-semibold transition-all duration-300"
+            style={{
+              background: isEdit ? "#0fd4a0" : "transparent",
+              border: "0.5px solid rgba(15,212,160,0.4)",
+              color: isEdit ? "#0a0f1a" : "#0fd4a0",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 20px rgba(15,212,160,0.2)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           >
-            Save
+            {isEdit ? "Save Changes" : "Edit Profile"}
           </button>
-        ) : (
-          <button
-            className="border border-primary px-8 py-2 rounded-full hover:bg-primary hover:text-white transition-all"
-            onClick={() => isSetEdit(true)}
-          >
-            Edit
-          </button>
-        )}
+        </div>
       </div>
     </div>
   );

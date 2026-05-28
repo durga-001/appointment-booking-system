@@ -1,32 +1,122 @@
 import React from "react";
 import { assets } from "../assets/assets";
+
 const Contact = () => {
   return (
-    <div>
-      <div className="text-center text-2xl pt-10 text-gray-500">
-        CONTACT <span className="text-gray-700 font-semibold">US</span>
+    <div
+      className="min-h-screen px-4 sm:px-8 md:px-12 py-12"
+      style={{ background: "#0a0f1a" }}
+    >
+      {/* Heading */}
+      <div className="text-center mb-12">
+        <p
+          className="text-xs font-semibold uppercase tracking-widest mb-2"
+          style={{ color: "#4a5878" }}
+        >
+          Get in touch
+        </p>
+        <h1
+          className="text-4xl font-semibold"
+          style={{ fontFamily: "'Playfair Display',serif", color: "#e8f0ff" }}
+        >
+          Contact <span style={{ color: "#0fd4a0" }}>Us</span>
+        </h1>
       </div>
 
-      <div className="my-10 flex flex-col justify-center md:flex-row gap-10 mb-28 text-sm">
-        <img className="w-full md:max-w-90" src={assets.contact_image} alt="" />
-        <div className="flex flex-col justify-center items-start gap-6">
-          <p className="font-semibold text-lg text-gray-600">Our OFFICE</p>
-          <p className="text-gray-600">
-            45 Wellness Avenue, Sector 12 <br /> Del, Del – 110022 <br />
-            Ininaa
-          </p>
-          <p className="text-gray-600">
-            Tel : (434) 534-3434 <br /> Email: medisync@gmail.com
-          </p>
-          <p className="font-semibold text-lg text-gray-600">
-            Careers at Medisync
-          </p>
-          <p className="text-gray=500">
-            Learn more about our teams and job openings/
-          </p>
-          <button className="border border-black px-8 py-4 text-sm hover:bg-black hover:text-white transition-all duration-500">
-            Explore jobs
-          </button>
+      <div className="flex flex-col md:flex-row gap-10 mb-20 items-center">
+        {/* Image */}
+        <img
+          className="w-full md:max-w-sm rounded-2xl object-cover"
+          style={{ border: "0.5px solid rgba(74,158,255,0.12)" }}
+          src={assets.contact_image}
+          alt="Contact"
+        />
+
+        {/* Info card */}
+        <div
+          className="flex-1 rounded-2xl p-8 flex flex-col gap-6"
+          style={{
+            background: "#141f35",
+            border: "0.5px solid rgba(74,158,255,0.12)",
+          }}
+        >
+          {/* Office */}
+          <div>
+            <p
+              className="text-xs font-semibold uppercase tracking-widest mb-3"
+              style={{ color: "#4a5878" }}
+            >
+              Our Office
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: "#8899bb" }}>
+              45 Wellness Avenue, Sector 12
+              <br />
+              Delhi – 110022, India
+            </p>
+          </div>
+
+          <div
+            style={{ height: "0.5px", background: "rgba(74,158,255,0.1)" }}
+          />
+
+          {/* Contact details */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <span style={{ color: "#0fd4a0" }}>📞</span>
+              <p className="text-sm" style={{ color: "#8899bb" }}>
+                (434) 534-3434
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span style={{ color: "#0fd4a0" }}>✉️</span>
+              <p className="text-sm" style={{ color: "#4a9eff" }}>
+                medisync@gmail.com
+              </p>
+            </div>
+          </div>
+
+          <div
+            style={{ height: "0.5px", background: "rgba(74,158,255,0.1)" }}
+          />
+
+          {/* Careers */}
+          <div>
+            <p
+              className="text-base font-semibold mb-1"
+              style={{
+                color: "#e8f0ff",
+                fontFamily: "'Playfair Display',serif",
+              }}
+            >
+              Careers at Medisync
+            </p>
+            <p className="text-sm mb-4" style={{ color: "#8899bb" }}>
+              Learn more about our teams and job openings.
+            </p>
+            <button
+              className="px-8 py-2.5 rounded-full text-sm font-semibold transition-all duration-300"
+              style={{
+                background: "transparent",
+                border: "0.5px solid rgba(15,212,160,0.4)",
+                color: "#0fd4a0",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#0fd4a0";
+                e.currentTarget.style.color = "#0a0f1a";
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow =
+                  "0 6px 20px rgba(15,212,160,0.25)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "#0fd4a0";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              Explore Jobs →
+            </button>
+          </div>
         </div>
       </div>
     </div>
