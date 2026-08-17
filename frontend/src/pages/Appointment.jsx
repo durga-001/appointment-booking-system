@@ -3,6 +3,11 @@ import { useParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import RelatedDoctors from "../components/RelatedDoctors";
+import { useNavigate } from "react-router-dom";
+const { doctors, currencySymbol, token, bookAppointment } =
+  useContext(AppContext);
+const navigate = useNavigate();
+const [bookingMessage, setBookingMessage] = useState("");
 
 const Appointment = () => {
   const { docId } = useParams();
@@ -17,6 +22,23 @@ const Appointment = () => {
   const fetchDocInfo = async () => {
     const docInfo = doctors.find((doc) => doc._id === docId);
     setDocInfo(docInfo);
+  };
+
+  const handleBookAppointment = () => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    if (!slotTime || !slotDatetime) {
+      setBookingMessage("Please select a day and time slot first.");
+      return;
+    }
+    const result = bookAppointment(docId, slotDatetime.toISOString(), slotTime);
+    if (result.success) {
+      navigate("/my-appointments");
+    } else {
+      setBookingMessage(result.message || "Something went wrong.");
+    }
   };
 
   const getAvailableSlots = async () => {
@@ -223,20 +245,17 @@ const Appointment = () => {
 
           {/* Book button */}
           <button
+            onClick={handleBookAppointment}
             className="mt-7 px-14 py-3 rounded-full text-sm font-semibold transition-all duration-300"
             style={{ background: "#0fd4a0", color: "#0a0f1a" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-3px)";
-              e.currentTarget.style.boxShadow =
-                "0 8px 28px rgba(15,212,160,0.35)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
           >
             Book Appointment
           </button>
+          {bookingMessage && (
+            <p className="mt-3 text-sm" style={{ color: "#ef4444" }}>
+              {bookingMessage}
+            </p>
+          )}
         </div>
 
         {/* Related doctors */}
