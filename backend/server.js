@@ -14,7 +14,7 @@ connectDB();
 
 // middlewares
 app.use(express.json());
-app.use(cors());
+app.use(cors(origin: "https://medisync-1-4guz.onrender.com"));
 
 // api routes
 app.use("/api/user", userRouter);
