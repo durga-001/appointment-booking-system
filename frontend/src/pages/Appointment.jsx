@@ -1,30 +1,41 @@
 import React, { useContext, useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import RelatedDoctors from "../components/RelatedDoctors";
-import { useNavigate } from "react-router-dom";
-const { doctors, currencySymbol, token, bookAppointment } =
-  useContext(AppContext);
-const navigate = useNavigate();
-const [bookingMessage, setBookingMessage] = useState("");
 
 const Appointment = () => {
   const { docId } = useParams();
-  const { doctors, currencySymbol } = useContext(AppContext);
+  const { doctors, currencySymbol, token, bookAppointment } =
+    useContext(AppContext);
+  const navigate = useNavigate();
   const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
+  const [bookingMessage, setBookingMessage] = useState("");
+  const [booking, setBooking] = useState(false);
   const [docInfo, setDocInfo] = useState(null);
   const [docSlots, setDocSlots] = useState([]);
   const [slotIndex, setSlotIndex] = useState(0);
   const [slotTime, setSlotTime] = useState("");
+  const [slotDatetime, setSlotDatetime] = useState(null); // was missing entirely before
 
-  const fetchDocInfo = async () => {
-    const docInfo = doctors.find((doc) => doc._id === docId);
-    setDocInfo(docInfo);
+  const fetchDocInfo = () => {
+    const info = doctors.find((doc) => doc._id === docId);
+    setDocInfo(info);
   };
 
-  const handleBookAppointment = () => {
+  // Turns a JS Date into the "D_M_YYYY" key format the backend uses in
+  // doctor.slots_booked, so booked-slot lookups match exactly.
+  const toSlotDateKey = (date) =>
+    `${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}`;
+
+  const isSlotBusy = (date, time) => {
+    if (!docInfo?.slots_booked) return false;
+    const key = toSlotDateKey(date);
+    return docInfo.slots_booked[key]?.includes(time) || false;
+  };
+
+  const handleBookAppointment = async () => {
     if (!token) {
       navigate("/login");
       return;
@@ -33,7 +44,13 @@ const Appointment = () => {
       setBookingMessage("Please select a day and time slot first.");
       return;
     }
-    const result = bookAppointment(docId, slotDatetime.toISOString(), slotTime);
+
+    setBooking(true);
+    setBookingMessage("");
+    const slotDate = toSlotDateKey(slotDatetime);
+    const result = await bookAppointment(docId, slotDate, slotTime);
+    setBooking(false);
+
     if (result.success) {
       navigate("/my-appointments");
     } else {
@@ -41,27 +58,29 @@ const Appointment = () => {
     }
   };
 
-  const getAvailableSlots = async () => {
+  const getAvailableSlots = () => {
     setDocSlots([]);
     let today = new Date();
+    let allDays = [];
+
     for (let i = 0; i < 7; i++) {
       let currentDate = new Date(today);
       currentDate.setDate(today.getDate() + i);
-      let endTime = new Date();
-      endTime.setDate(today.getDate() + i);
+      let endTime = new Date(currentDate);
       endTime.setHours(21, 0, 0, 0);
-      if (today.getDate === currentDate.getDate()) {
+
+      if (i === 0) {
         currentDate.setHours(
           currentDate.getHours() > 10 ? currentDate.getHours() + 1 : 10,
         );
         currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0);
       } else {
-        currentDate.setHours(10);
-        currentDate.setMinutes(0);
+        currentDate.setHours(10, 0, 0, 0);
       }
+
       let timeSlots = [];
       while (currentDate < endTime) {
-        let formattedTime = currentDate.toLocaleTimeString([], {
+        const formattedTime = currentDate.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         });
@@ -71,196 +90,235 @@ const Appointment = () => {
         });
         currentDate.setMinutes(currentDate.getMinutes() + 30);
       }
-      setDocSlots((prev) => [...prev, timeSlots]);
+      allDays.push(timeSlots);
     }
+    setDocSlots(allDays);
   };
 
   useEffect(() => {
-    fetchDocInfo();
+    if (doctors.length > 0) fetchDocInfo();
   }, [doctors, docId]);
+
   useEffect(() => {
-    getAvailableSlots();
+    if (docInfo) getAvailableSlots();
   }, [docInfo]);
 
-  return (
-    docInfo && (
+  if (!docInfo) {
+    return (
       <div
-        className="min-h-screen px-4 sm:px-8 md:px-12 py-10"
-        style={{ background: "#0a0f1a" }}
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#0a0f1a", color: "#8899bb" }}
       >
-        {/* ── Doctor Details ── */}
-        <div className="flex flex-col sm:flex-row gap-6">
-          {/* Photo */}
-          <div className="shrink-0">
-            <img
-              className="w-full sm:max-w-72 rounded-2xl object-cover"
-              style={{ background: "linear-gradient(160deg,#0d2040,#0a1a30)" }}
-              src={docInfo.image}
-              alt={docInfo.name}
-            />
-          </div>
+        Loading doctor details...
+      </div>
+    );
+  }
 
-          {/* Info card */}
-          <div
-            className="flex-1 rounded-2xl p-7"
-            style={{
-              background: "#141f35",
-              border: "0.5px solid rgba(74,158,255,0.12)",
-            }}
-          >
-            {/* Name + verified */}
-            <p
-              className="flex items-center gap-2 text-2xl font-semibold"
-              style={{
-                color: "#e8f0ff",
-                fontFamily: "'Playfair Display',serif",
-              }}
-            >
-              {docInfo.name}
-              <img className="w-5" src={assets.verified_icon} alt="verified" />
-            </p>
-
-            {/* Degree / speciality / experience */}
-            <div
-              className="flex items-center gap-3 text-sm mt-2"
-              style={{ color: "#8899bb" }}
-            >
-              <p>
-                {docInfo.degree} — {docInfo.speciality}
-              </p>
-              <span
-                className="px-3 py-0.5 rounded-full text-xs"
-                style={{
-                  border: "0.5px solid rgba(15,212,160,0.4)",
-                  color: "#0fd4a0",
-                }}
-              >
-                {docInfo.experience}
-              </span>
-            </div>
-
-            {/* About */}
-            <div className="mt-5">
-              <p
-                className="flex items-center gap-1 text-sm font-medium mb-2"
-                style={{ color: "#e8f0ff" }}
-              >
-                About <img src={assets.info_icon} alt="" />
-              </p>
-              <p
-                className="text-sm leading-relaxed max-w-2xl"
-                style={{ color: "#8899bb" }}
-              >
-                {docInfo.about}
-              </p>
-            </div>
-
-            {/* Fee */}
-            <div
-              className="inline-flex items-center gap-2 mt-5 px-4 py-2 rounded-xl text-sm"
-              style={{
-                background: "rgba(15,212,160,0.08)",
-                border: "0.5px solid rgba(15,212,160,0.2)",
-              }}
-            >
-              <span style={{ color: "#8899bb" }}>Appointment Fee:</span>
-              <span className="font-semibold" style={{ color: "#0fd4a0" }}>
-                {currencySymbol}
-                {docInfo.fees}
-              </span>
-            </div>
-          </div>
+  return (
+    <div
+      className="min-h-screen px-4 sm:px-8 md:px-12 py-10"
+      style={{ background: "#0a0f1a" }}
+    >
+      {/* ── Doctor Details ── */}
+      <div className="flex flex-col sm:flex-row gap-6">
+        <div className="shrink-0">
+          <img
+            className="w-full sm:max-w-72 rounded-2xl object-cover"
+            style={{ background: "linear-gradient(160deg,#0d2040,#0a1a30)" }}
+            src={docInfo.image}
+            alt={docInfo.name}
+          />
         </div>
 
-        {/* ── Booking Slots ── */}
         <div
-          className="mt-8 rounded-2xl p-7 sm:ml-0"
+          className="flex-1 rounded-2xl p-7"
           style={{
             background: "#141f35",
             border: "0.5px solid rgba(74,158,255,0.12)",
           }}
         >
           <p
-            className="text-base font-semibold mb-5"
-            style={{ color: "#e8f0ff" }}
+            className="flex items-center gap-2 text-2xl font-semibold"
+            style={{ color: "#e8f0ff", fontFamily: "'Playfair Display',serif" }}
           >
-            Select Appointment Slot
+            {docInfo.name}
+            <img className="w-5" src={assets.verified_icon} alt="verified" />
           </p>
 
-          {/* Day pills */}
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {docSlots.length &&
-              docSlots.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => setSlotIndex(index)}
-                  className="flex flex-col items-center py-4 min-w-[60px] rounded-2xl cursor-pointer transition-all duration-300 shrink-0"
-                  style={{
-                    background: slotIndex === index ? "#0fd4a0" : "#0f1829",
-                    border:
-                      slotIndex === index
-                        ? "0.5px solid #0fd4a0"
-                        : "0.5px solid rgba(74,158,255,0.15)",
-                    color: slotIndex === index ? "#0a0f1a" : "#8899bb",
-                    fontWeight: slotIndex === index ? "600" : "400",
-                    boxShadow:
-                      slotIndex === index
-                        ? "0 4px 16px rgba(15,212,160,0.25)"
-                        : "none",
-                  }}
-                >
-                  <p className="text-xs">
-                    {item[0] && daysOfWeek[item[0].datetime.getDay()]}
-                  </p>
-                  <p className="text-lg font-semibold">
-                    {item[0] && item[0].datetime.getDate()}
-                  </p>
-                </div>
-              ))}
-          </div>
-
-          {/* Time pills */}
-          <div className="flex items-center gap-3 overflow-x-auto mt-5 pb-2">
-            {docSlots.length &&
-              docSlots[slotIndex].map((item, index) => (
-                <p
-                  key={index}
-                  onClick={() => setSlotTime(item.time)}
-                  className="text-sm shrink-0 px-5 py-2 rounded-full cursor-pointer transition-all duration-300"
-                  style={{
-                    background:
-                      item.time === slotTime ? "#0fd4a0" : "transparent",
-                    border:
-                      item.time === slotTime
-                        ? "0.5px solid #0fd4a0"
-                        : "0.5px solid rgba(74,158,255,0.2)",
-                    color: item.time === slotTime ? "#0a0f1a" : "#8899bb",
-                    fontWeight: item.time === slotTime ? "600" : "400",
-                  }}
-                >
-                  {item.time.toLowerCase()}
-                </p>
-              ))}
-          </div>
-
-          <button
-            onClick={handleBookAppointment}
-            className="mt-7 px-14 py-3 rounded-full text-sm font-semibold transition-all duration-300"
-            style={{ background: "#0fd4a0", color: "#0a0f1a" }}
+          <div
+            className="flex items-center gap-3 text-sm mt-2"
+            style={{ color: "#8899bb" }}
           >
-            Book Appointment
-          </button>
-          {bookingMessage && (
-            <p className="mt-3 text-sm" style={{ color: "#ef4444" }}>
-              {bookingMessage}
+            <p>
+              {docInfo.degree} — {docInfo.speciality}
             </p>
-          )}
+            <span
+              className="px-3 py-0.5 rounded-full text-xs"
+              style={{
+                border: "0.5px solid rgba(15,212,160,0.4)",
+                color: "#0fd4a0",
+              }}
+            >
+              {docInfo.experience}
+            </span>
+            {docInfo.available === false && (
+              <span
+                className="px-3 py-0.5 rounded-full text-xs"
+                style={{
+                  border: "0.5px solid rgba(239,68,68,0.4)",
+                  color: "#ef4444",
+                }}
+              >
+                Currently Unavailable
+              </span>
+            )}
+          </div>
+
+          <div className="mt-5">
+            <p
+              className="flex items-center gap-1 text-sm font-medium mb-2"
+              style={{ color: "#e8f0ff" }}
+            >
+              About <img src={assets.info_icon} alt="" />
+            </p>
+            <p
+              className="text-sm leading-relaxed max-w-2xl"
+              style={{ color: "#8899bb" }}
+            >
+              {docInfo.about}
+            </p>
+          </div>
+
+          <div
+            className="inline-flex items-center gap-2 mt-5 px-4 py-2 rounded-xl text-sm"
+            style={{
+              background: "rgba(15,212,160,0.08)",
+              border: "0.5px solid rgba(15,212,160,0.2)",
+            }}
+          >
+            <span style={{ color: "#8899bb" }}>Appointment Fee:</span>
+            <span className="font-semibold" style={{ color: "#0fd4a0" }}>
+              {currencySymbol}
+              {docInfo.fees}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Booking Slots ── */}
+      <div
+        className="mt-8 rounded-2xl p-7 sm:ml-0"
+        style={{
+          background: "#141f35",
+          border: "0.5px solid rgba(74,158,255,0.12)",
+        }}
+      >
+        <p
+          className="text-base font-semibold mb-5"
+          style={{ color: "#e8f0ff" }}
+        >
+          Select Appointment Slot
+        </p>
+
+        {/* Day pills */}
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {docSlots.length > 0 &&
+            docSlots.map((daySlots, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  setSlotIndex(index);
+                  setSlotTime("");
+                  setSlotDatetime(null);
+                }}
+                className="flex flex-col items-center py-4 min-w-[60px] rounded-2xl cursor-pointer transition-all duration-300 shrink-0"
+                style={{
+                  background: slotIndex === index ? "#0fd4a0" : "#0f1829",
+                  border:
+                    slotIndex === index
+                      ? "0.5px solid #0fd4a0"
+                      : "0.5px solid rgba(74,158,255,0.15)",
+                  color: slotIndex === index ? "#0a0f1a" : "#8899bb",
+                  fontWeight: slotIndex === index ? "600" : "400",
+                  boxShadow:
+                    slotIndex === index
+                      ? "0 4px 16px rgba(15,212,160,0.25)"
+                      : "none",
+                }}
+              >
+                <p className="text-xs">
+                  {daySlots[0] && daysOfWeek[daySlots[0].datetime.getDay()]}
+                </p>
+                <p className="text-lg font-semibold">
+                  {daySlots[0] && daySlots[0].datetime.getDate()}
+                </p>
+              </div>
+            ))}
         </div>
 
-        {/* Related doctors */}
-        <RelatedDoctors docId={docId} speciality={docInfo.speciality} />
+        {/* Time pills — busy slots are shown disabled and greyed out */}
+        <div className="flex items-center gap-3 overflow-x-auto mt-5 pb-2">
+          {docSlots.length > 0 &&
+            docSlots[slotIndex]?.map((item, index) => {
+              const busy = isSlotBusy(item.datetime, item.time);
+              const selected = item.time === slotTime;
+              return (
+                <p
+                  key={index}
+                  onClick={() => {
+                    if (busy) return;
+                    setSlotTime(item.time);
+                    setSlotDatetime(item.datetime);
+                  }}
+                  className="text-sm shrink-0 px-5 py-2 rounded-full transition-all duration-300"
+                  style={{
+                    cursor: busy ? "not-allowed" : "pointer",
+                    background: selected
+                      ? "#0fd4a0"
+                      : busy
+                        ? "rgba(239,68,68,0.06)"
+                        : "transparent",
+                    border: selected
+                      ? "0.5px solid #0fd4a0"
+                      : busy
+                        ? "0.5px solid rgba(239,68,68,0.35)"
+                        : "0.5px solid rgba(74,158,255,0.2)",
+                    color: selected ? "#0a0f1a" : busy ? "#ef4444" : "#8899bb",
+                    fontWeight: selected ? "600" : "400",
+                    opacity: busy ? 0.7 : 1,
+                    textDecoration: busy ? "line-through" : "none",
+                  }}
+                  title={busy ? "This slot is already booked" : "Available"}
+                >
+                  {item.time.toLowerCase()} {busy ? "· busy" : ""}
+                </p>
+              );
+            })}
+        </div>
+
+        {/* Book button */}
+        <button
+          onClick={handleBookAppointment}
+          disabled={booking}
+          className="mt-7 px-14 py-3 rounded-full text-sm font-semibold transition-all duration-300"
+          style={{
+            background: booking ? "#0a8f6e" : "#0fd4a0",
+            color: "#0a0f1a",
+            cursor: booking ? "not-allowed" : "pointer",
+          }}
+        >
+          {booking ? "Booking..." : "Book Appointment"}
+        </button>
+        {bookingMessage && (
+          <p className="mt-3 text-sm" style={{ color: "#ef4444" }}>
+            {bookingMessage}
+          </p>
+        )}
       </div>
-    )
+
+      {/* Related doctors */}
+      <RelatedDoctors docId={docId} speciality={docInfo.speciality} />
+    </div>
   );
 };
 

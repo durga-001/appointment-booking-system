@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
-import razorpayInstance from "../config/razorpay.js";
+import razorpayInstance from "../utils/razorpay.js";
 import crypto from "crypto";
 
 // ---------- REGISTER ----------

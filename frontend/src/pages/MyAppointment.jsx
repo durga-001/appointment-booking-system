@@ -1,20 +1,96 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 
 const MyAppointments = () => {
-  const { appointments, cancelAppointment, payAppointment } =
-    useContext(AppContext);
+  const { token, backendUrl } = useContext(AppContext);
   const navigate = useNavigate();
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const formatSlotDate = (isoString) => {
-    const d = new Date(isoString);
+  const formatSlotDate = (slotDate) => {
+    // slotDate is stored like "5_1_2026" (day_month_year)
+    const [day, month, year] = slotDate.split("_").map(Number);
+    const d = new Date(year, month - 1, day);
     return d.toLocaleDateString(undefined, {
       day: "numeric",
       month: "long",
       year: "numeric",
     });
   };
+
+  const getUserAppointments = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${backendUrl}/api/user/appointments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success) {
+        setAppointments(data.appointments.reverse()); // newest first
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelAppointment = async (appointmentId) => {
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/user/cancel-appointment`,
+        { appointmentId },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (data.success) {
+        getUserAppointments(); // re-fetch so the list reflects the cancel immediately
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const payAppointment = async (appointmentId) => {
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/user/payment-razorpay`,
+        { appointmentId },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (data.success) {
+        // TODO: open Razorpay checkout with data.order here
+        console.log("Razorpay order created:", data.order);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // fetch on mount AND whenever token changes (e.g. after login) -
+  // this is what makes the page reflect a just-booked appointment
+  useEffect(() => {
+    if (token) {
+      getUserAppointments();
+    } else {
+      navigate("/login");
+    }
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          background: "#0a0f1a",
+          minHeight: "100vh",
+          color: "#8899bb",
+          padding: "2.5rem 2rem",
+        }}
+      >
+        Loading your appointments...
+      </div>
+    );
+  }
 
   return (
     <div
@@ -77,7 +153,7 @@ const MyAppointments = () => {
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {appointments.map((appt) => (
             <div
-              key={appt.id}
+              key={appt._id}
               style={{
                 display: "flex",
                 flexDirection: "row",
@@ -159,10 +235,10 @@ const MyAppointments = () => {
                   Address
                 </p>
                 <p style={{ color: "#8899bb", fontSize: "0.73rem", margin: 0 }}>
-                  {appt.docData.address.line1}
+                  {appt.docData.address?.line1}
                 </p>
                 <p style={{ color: "#8899bb", fontSize: "0.73rem", margin: 0 }}>
-                  {appt.docData.address.line2}
+                  {appt.docData.address?.line2}
                 </p>
 
                 <div style={{ marginTop: "0.35rem" }}>
@@ -183,6 +259,30 @@ const MyAppointments = () => {
                   >
                     📅 {formatSlotDate(appt.slotDate)} · {appt.slotTime}
                   </span>
+                  {appt.status === "pending" && !appt.cancelled && (
+                    <span
+                      style={{
+                        marginLeft: "0.5rem",
+                        fontSize: "0.7rem",
+                        color: "#f5b942",
+                        fontWeight: 600,
+                      }}
+                    >
+                      PENDING
+                    </span>
+                  )}
+                  {appt.status === "accepted" && !appt.cancelled && (
+                    <span
+                      style={{
+                        marginLeft: "0.5rem",
+                        fontSize: "0.7rem",
+                        color: "#0fd4a0",
+                        fontWeight: 600,
+                      }}
+                    >
+                      ACCEPTED
+                    </span>
+                  )}
                   {appt.cancelled && (
                     <span
                       style={{
@@ -222,7 +322,7 @@ const MyAppointments = () => {
                 >
                   {!appt.payment && (
                     <button
-                      onClick={() => payAppointment(appt.id)}
+                      onClick={() => payAppointment(appt._id)}
                       style={{
                         padding: "0.55rem 0.75rem",
                         borderRadius: "999px",
@@ -242,7 +342,7 @@ const MyAppointments = () => {
                   <button
                     onClick={() => {
                       if (window.confirm("Cancel this appointment?")) {
-                        cancelAppointment(appt.id);
+                        cancelAppointment(appt._id);
                       }
                     }}
                     style={{

@@ -1,108 +1,131 @@
 import { createContext, useState, useEffect } from "react";
-import { doctors } from "../assets/assets";
+import axios from "axios";
 
 export const AppContext = createContext();
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 const AppContextProvider = (props) => {
-  const currencySymbol = `$`;
+  const currencySymbol = "$";
 
   // ---- Auth state ----
   const [token, setToken] = useState(localStorage.getItem("token") || "");
-  const [userData, setUserData] = useState(
-    localStorage.getItem("userData")
-      ? JSON.parse(localStorage.getItem("userData"))
-      : null,
-  );
+  const [userData, setUserData] = useState(null);
 
-  const login = (email, password) => {
-    // Mock auth — swap for a real API call once you have a backend
-    if (!email || !password)
-      return { success: false, message: "Email and password required" };
-    const fakeToken = "mock-token-" + Date.now();
-    const user = { name: email.split("@")[0], email };
-    setToken(fakeToken);
-    setUserData(user);
-    localStorage.setItem("token", fakeToken);
-    localStorage.setItem("userData", JSON.stringify(user));
-    return { success: true };
+  // ---- Doctors (fetched from backend, not hardcoded) ----
+  const [doctors, setDoctors] = useState([]);
+
+  const getDoctorsData = async () => {
+    try {
+      const { data } = await axios.get(`${backendUrl}/api/doctor/list`);
+      if (data.success) {
+        setDoctors(data.doctors);
+      } else {
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const signup = (name, email, password) => {
-    if (!name || !email || !password)
-      return { success: false, message: "All fields required" };
-    const fakeToken = "mock-token-" + Date.now();
-    const user = { name, email };
-    setToken(fakeToken);
-    setUserData(user);
-    localStorage.setItem("token", fakeToken);
-    localStorage.setItem("userData", JSON.stringify(user));
-    return { success: true };
+  // ---- Profile ----
+  const loadUserProfileData = async () => {
+    try {
+      const { data } = await axios.get(`${backendUrl}/api/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success) setUserData(data.userData);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const login = async (email, password) => {
+    try {
+      const { data } = await axios.post(`${backendUrl}/api/user/login`, {
+        email,
+        password,
+      });
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        setToken(data.token);
+      }
+      return data; // { success, token } or { success:false, message }
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const signup = async (name, email, password) => {
+    try {
+      const { data } = await axios.post(`${backendUrl}/api/user/register`, {
+        name,
+        email,
+        password,
+      });
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        setToken(data.token);
+      }
+      return data;
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: error.message };
+    }
   };
 
   const logout = () => {
     setToken("");
     setUserData(null);
     localStorage.removeItem("token");
-    localStorage.removeItem("userData");
   };
 
-  // ---- Appointments state ----
-  const [appointments, setAppointments] = useState(
-    localStorage.getItem("appointments")
-      ? JSON.parse(localStorage.getItem("appointments"))
-      : [],
-  );
+  // ---- Appointments ----
+  // bookAppointment now hits the real API. It no longer manages local
+  // appointment state itself - MyAppointment.jsx re-fetches from the
+  // server after navigating there, so there's one source of truth.
+  const bookAppointment = async (docId, slotDate, slotTime) => {
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/user/book-appointment`,
+        { docId, slotDate, slotTime },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      // refresh doctor list so slots_booked reflects the new booking
+      // immediately (important for the busy/free slot display)
+      if (data.success) getDoctorsData();
+      return data; // { success, message }
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: error.message };
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem("appointments", JSON.stringify(appointments));
-  }, [appointments]);
+    getDoctorsData();
+  }, []);
 
-  const bookAppointment = (docId, slotDate, slotTime) => {
-    const docInfo = doctors.find((doc) => doc._id === docId);
-    if (!docInfo) return { success: false, message: "Doctor not found" };
-
-    const newAppointment = {
-      id: "appt-" + Date.now(),
-      docId,
-      docData: docInfo,
-      slotDate,
-      slotTime,
-      cancelled: false,
-      payment: false,
-    };
-
-    setAppointments((prev) => [...prev, newAppointment]);
-    return { success: true, appointment: newAppointment };
-  };
-
-  const cancelAppointment = (appointmentId) => {
-    setAppointments((prev) =>
-      prev.map((appt) =>
-        appt.id === appointmentId ? { ...appt, cancelled: true } : appt,
-      ),
-    );
-  };
-
-  const payAppointment = (appointmentId) => {
-    setAppointments((prev) =>
-      prev.map((appt) =>
-        appt.id === appointmentId ? { ...appt, payment: true } : appt,
-      ),
-    );
-  };
+  useEffect(() => {
+    if (token) {
+      loadUserProfileData();
+    } else {
+      setUserData(null);
+    }
+  }, [token]);
 
   const value = {
     doctors,
+    getDoctorsData,
     currencySymbol,
+    backendUrl,
     token,
+    setToken,
     userData,
     login,
     signup,
     logout,
-    appointments,
     bookAppointment,
-    cancelAppointment,
-    payAppointment,
   };
 
   return (
