@@ -243,7 +243,6 @@ const Appointment = () => {
               ))}
           </div>
 
-          {/* Book button */}
           <button
             onClick={handleBookAppointment}
             className="mt-7 px-14 py-3 rounded-full text-sm font-semibold transition-all duration-300"
