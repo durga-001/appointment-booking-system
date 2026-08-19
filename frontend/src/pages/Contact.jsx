@@ -78,45 +78,6 @@ const Contact = () => {
           <div
             style={{ height: "0.5px", background: "rgba(74,158,255,0.1)" }}
           />
-
-          {/* Careers */}
-          <div>
-            <p
-              className="text-base font-semibold mb-1"
-              style={{
-                color: "#e8f0ff",
-                fontFamily: "'Playfair Display',serif",
-              }}
-            >
-              Careers at Medisync
-            </p>
-            <p className="text-sm mb-4" style={{ color: "#8899bb" }}>
-              Learn more about our teams and job openings.
-            </p>
-            <button
-              className="px-8 py-2.5 rounded-full text-sm font-semibold transition-all duration-300"
-              style={{
-                background: "transparent",
-                border: "0.5px solid rgba(15,212,160,0.4)",
-                color: "#0fd4a0",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#0fd4a0";
-                e.currentTarget.style.color = "#0a0f1a";
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow =
-                  "0 6px 20px rgba(15,212,160,0.25)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "#0fd4a0";
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              Explore Jobs →
-            </button>
-          </div>
         </div>
       </div>
     </div>

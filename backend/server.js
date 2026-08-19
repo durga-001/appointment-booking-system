@@ -20,6 +20,7 @@ app.use(cors());
 app.use("/api/user", userRouter);
 app.use("/api/doctor", doctorRouter);
 app.use("/api/admin", adminRouter);
+app.use("/uploads", express.static("uploads"));
 
 app.get("/", (req, res) => {
   res.send("MediSync API is running");
