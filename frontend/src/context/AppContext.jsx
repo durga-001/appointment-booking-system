@@ -122,6 +122,7 @@ const AppContextProvider = (props) => {
     token,
     setToken,
     userData,
+    loadUserProfileData,
     login,
     signup,
     logout,

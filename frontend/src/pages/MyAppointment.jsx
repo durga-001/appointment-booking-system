@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 
 const MyAppointments = () => {
-  const { token, backendUrl } = useContext(AppContext);
+  const { token, backendUrl, getDoctorsData } = useContext(AppContext);
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,8 @@ const MyAppointments = () => {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (data.success) {
-        getUserAppointments(); // re-fetch so the list reflects the cancel immediately
+        getUserAppointments();
+        getDoctorsData();
       }
     } catch (error) {
       console.error(error);
@@ -53,17 +54,58 @@ const MyAppointments = () => {
 
   const payAppointment = async (appointmentId) => {
     try {
+      // 1. Create the Razorpay order on the backend
       const { data } = await axios.post(
         `${backendUrl}/api/user/payment-razorpay`,
         { appointmentId },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      if (data.success) {
-        // TODO: open Razorpay checkout with data.order here
-        console.log("Razorpay order created:", data.order);
+
+      if (!data.success) {
+        alert(data.message || "Could not start payment");
+        return;
       }
+
+      const order = data.order;
+
+      // 2. Open the Razorpay checkout modal
+      const options = {
+        key: import.meta.env.RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "MediSync",
+        description: "Appointment Payment",
+        order_id: order.id,
+        handler: async (response) => {
+          // 3. On successful payment, verify signature server-side
+          try {
+            const { data: verifyData } = await axios.post(
+              `${backendUrl}/api/user/verify-razorpay`,
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            if (verifyData.success) {
+              getUserAppointments(); // refresh list so it now shows PAID
+            } else {
+              alert(verifyData.message || "Payment verification failed");
+            }
+          } catch (error) {
+            console.error(error);
+            alert("Payment verification failed");
+          }
+        },
+        theme: { color: "#0fd4a0" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (error) {
       console.error(error);
+      alert("Could not start payment");
     }
   };
 

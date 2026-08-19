@@ -1,15 +1,15 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { assets } from "../assets/assets";
 import { NavLink, useNavigate } from "react-router-dom";
+import { AppContext } from "../context/AppContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { token, logout, userData } = useContext(AppContext); // real auth state, not local fake state
   const [showMenu, setShowMenu] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [token, setToken] = useState(true);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -20,11 +20,15 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close mobile menu on route change
   const handleNavClick = () => {
     setShowMenu(false);
     setShowDropdown(false);
     scrollTo(0, 0);
+  };
+
+  const handleLogout = () => {
+    logout(); // real logout: clears context token + localStorage
+    navigate("/login");
   };
 
   const navLinks = [
@@ -64,7 +68,6 @@ const Navbar = () => {
           gap: "1rem",
         }}
       >
-        {/* Logo */}
         <img
           onClick={() => navigate("/")}
           style={{ width: "120px", cursor: "pointer", flexShrink: 0 }}
@@ -72,7 +75,6 @@ const Navbar = () => {
           alt="logo"
         />
 
-        {/* Desktop nav links */}
         <ul
           style={{
             display: "flex",
@@ -110,7 +112,6 @@ const Navbar = () => {
           ))}
         </ul>
 
-        {/* Right side */}
         <div
           style={{
             display: "flex",
@@ -121,7 +122,6 @@ const Navbar = () => {
         >
           {token ? (
             <div ref={dropdownRef} style={{ position: "relative" }}>
-              {/* Avatar toggle — click to open/close */}
               <div
                 onClick={() => setShowDropdown((p) => !p)}
                 style={{
@@ -145,7 +145,7 @@ const Navbar = () => {
                     border: "1.5px solid rgba(15,212,160,0.4)",
                     objectFit: "cover",
                   }}
-                  src={assets.profile_pic}
+                  src={userData?.image || assets.profile_pic}
                   alt="profile"
                 />
                 <img
@@ -160,7 +160,6 @@ const Navbar = () => {
                 />
               </div>
 
-              {/* Dropdown — only renders when open */}
               {showDropdown && (
                 <div
                   style={{
@@ -195,14 +194,7 @@ const Navbar = () => {
                         setShowDropdown(false);
                       },
                     },
-                    {
-                      label: "Logout",
-                      action: () => {
-                        setToken(false);
-                        setShowDropdown(false);
-                      },
-                      danger: true,
-                    },
+                    { label: "Logout", action: handleLogout, danger: true },
                   ].map(({ label, action, danger }) => (
                     <p
                       key={label}
@@ -267,7 +259,6 @@ const Navbar = () => {
             </button>
           )}
 
-          {/* Hamburger — mobile only */}
           <img
             onClick={() => setShowMenu(true)}
             className="md:hidden"
@@ -293,7 +284,6 @@ const Navbar = () => {
         }}
         className="md:hidden"
       >
-        {/* Mobile header */}
         <div
           style={{
             display: "flex",
@@ -312,7 +302,6 @@ const Navbar = () => {
           />
         </div>
 
-        {/* Mobile links */}
         <ul
           style={{
             display: "flex",
@@ -349,7 +338,6 @@ const Navbar = () => {
           ))}
         </ul>
 
-        {/* Mobile profile actions (if logged in) */}
         {token && (
           <div style={{ padding: "0 1.5rem", marginTop: "0.5rem" }}>
             <div
@@ -375,7 +363,7 @@ const Navbar = () => {
                   border: "1.5px solid rgba(15,212,160,0.4)",
                   objectFit: "cover",
                 }}
-                src={assets.profile_pic}
+                src={userData?.image || assets.profile_pic}
                 alt=""
               />
               <div>
@@ -387,7 +375,7 @@ const Navbar = () => {
                     margin: 0,
                   }}
                 >
-                  My Account
+                  {userData?.name || "My Account"}
                 </p>
                 <p style={{ color: "#8899bb", fontSize: "0.75rem", margin: 0 }}>
                   Manage your profile
@@ -412,7 +400,7 @@ const Navbar = () => {
               {
                 label: "Logout",
                 action: () => {
-                  setToken(false);
+                  handleLogout();
                   handleNavClick();
                 },
                 danger: true,
@@ -448,7 +436,6 @@ const Navbar = () => {
           </div>
         )}
 
-        {/* Mobile login button (if logged out) */}
         {!token && (
           <div style={{ padding: "1rem 1.5rem" }}>
             <button
